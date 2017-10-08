@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="500" height="500"></canvas>
+
+<script>
+
+    //declare canvas
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var dead = false;
+    var updateSpeed = 30;
+    var leftpress = false;
+    setInterval(gameLoop,updateSpeed);
+    var score = 0;
+    var canvases = {
+        width: 600,
+        height: 600
+    };
+
+    var snake = {
+        x:250,
+        y:250,
+        spd:10,
+        width:10,
+        height:10,
+        radius:10,
+        length:5
+    };
+
+    var xPos = [];
+    var yPos = [];
+
+    var oldX, oldY;
+
+    var ball = {
+        x:0,
+        y:0,
+        width:10,
+        height:10,
+        radius:10
+
+    };
+    function drawBall()
+    {
+        ball.x = Math.floor((Math.random() * 50) + 1) * 10;
+        ball.y = Math.floor((Math.random() * 50) + 1) * 10;
+
+        ctx.beginPath();
+        ctx.rect(ball.x,ball.y,ball.width,ball.height);
+        ctx.fillStyle = "green";
+        ctx.fill();
+        ctx.closePath();
+    }
+    var count = 0;
+    function drawSnake(x,y)
+    {
+        console.log("Ball " + ball.x);
+        console.log("Ball " + ball.y);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.beginPath();
+        ctx.rect(ball.x,ball.y,ball.width,ball.height);
+        ctx.fillStyle = "green";
+        ctx.fill();
+        ctx.closePath();
+        ctx.beginPath();
+        ctx.rect(x,y,snake.width,snake.height);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+        if(dead){
+            if(count < 4){
+                //dead = false;
+                xPos[0] = oldX;
+                yPos[0] = oldY;
+                for(var i = 0; i < count; i++){
+                    xPos[snake.length - i - 1] = xPos[snake.length - i - 2];
+                    yPos[snake.length - i - 1] = yPos[snake.length - i - 2];
+                    ctx.beginPath();
+                    ctx.rect(xPos[snake.length - i - 1],yPos[snake.length - i - 1],snake.width,snake.height);
+                    ctx.fillStyle = "red";
+                    ctx.fill();
+                    ctx.closePath();
+                    if(ball.x == xPos[snake.length - i - 1] && ball.y == yPos[snake.length - i - 1])
+                    {
+                        drawBall();
+                    }
+                    sCollisionDetection(xPos[snake.length - i - 1],yPos[snake.length - i - 1]);
+                    eatBall();
+                }
+                count ++;
+            }else{
+                dead = false;
+            }
+            
+            snake.length = 4;
+        }else{
+            xPos[0] = oldX;
+            yPos[0] = oldY;
+            for(var i = 0; i < snake.length; i++){
+                xPos[snake.length - i - 1] = xPos[snake.length - i - 2];
+                yPos[snake.length - i - 1] = yPos[snake.length - i - 2];
+                ctx.beginPath();
+                ctx.rect(xPos[snake.length - i - 1],yPos[snake.length - i - 1],snake.width,snake.height);
+                ctx.fillStyle = "red";
+                ctx.fill();
+                ctx.closePath();
+                if(ball.x == xPos[snake.length - i - 1] && ball.y == yPos[snake.length - i - 1])
+                {
+                    drawBall();
+                }
+                sCollisionDetection(xPos[snake.length - i - 1],yPos[snake.length - i - 1]);
+                eatBall();
+            }
+        }
+        
+        console.log(dead);
+    }
+    function eatBall(){
+        if(snake.x == ball.x && snake.y == ball.y){
+            snake.length++;
+            drawBall();
+            score++;
+        }
+    }
+    drawBall();
+    function gameLoop(){
+        drawSnake(snake.x,snake.y);
+        drawScore();
+        movingsnake();
+        checkBorder();
+        
+    }
+    function movingsnake(){
+        if(direction.up){
+            oldX = snake.x;
+            oldY = snake.y;
+            snake.y -= snake.spd;
+            
+        }else if(direction.down){
+            oldX = snake.x;
+            oldY = snake.y;
+            snake.y += snake.spd;
+           
+        }else if(direction.left){
+            oldX = snake.x;
+            oldY = snake.y;
+            snake.x -= snake.spd;
+        }else if(direction.right){
+            oldX = snake.x;
+            oldY = snake.y;
+            snake.x += snake.spd;
+        }
+    }
+    
+    function checkBorder(){
+        if(snake.x+snake.radius/2 >= canvases.width ||snake.x < 0){
+            die();
+        }
+
+        if(snake.y+snake.radius/2 >= canvases.height||snake.y < 0){
+            die();
+        }
+    }
+    
+    function sCollisionDetection(x,y)
+    {
+        if(snake.x == x && snake.y == y)
+        {
+            die();
+            
+        }
+    }
+    var direction =
+    {
+        up:false,
+        down:false,
+        left:true,
+        right:false
+    };
+
+    function die(){
+        snake.length = 1;
+        snake.x = 250;
+        snake.y = 250;
+        score = 0;
+        dead = true;
+    }
+    // movement
+    window.addEventListener('keydown',this.check,false);
+    function check(e) {
+        var code = e.keyCode;
+        switch (code) {
+            case 68: 
+            if(direction.left){
+
+            }else{
+                direction.left = false;
+                direction.right = true; 
+                direction.up = false; 
+                direction.down = false;  
+            }   
+            break;
+            case 65: 
+            if(direction.right){
+
+            }else{
+                direction.left = true;
+                direction.right = false; 
+                direction.up = false; 
+                direction.down = false;   
+            }
+            break; 
+            case 83: 
+            if(direction.up){
+
+            }else{
+                direction.left = false;
+                direction.right = false; 
+                direction.up = false; 
+                direction.down = true;   
+            }
+            break; 
+            case 87: 
+            if(direction.down){
+
+            }else{
+                direction.left = false;
+                direction.right = false; 
+                direction.up = true; 
+                direction.down = false;  
+            } 
+            break; 
+            //default: alert(code); //Everything else
+        }
+}
+
+function drawScore() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.fillText("Score: "+score, 8, 20);
+}
+
+</script>
